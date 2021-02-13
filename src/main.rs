@@ -1,3 +1,4 @@
+use ansi_term::Colour;
 use rand::Rng;
 use std::fs;
 use std::fs::File;
@@ -55,12 +56,12 @@ fn main() {
             let answer_str = get_random_str(&mut answer);
             let chars_to_delete = phrase_str.len() + answer_str.len() + 4;
 
-            eprint!("{}", phrase_str);
+            eprint!("{}", Colour::Red.bold().paint(phrase_str));
             for _i in 0..3 {
-                eprint!(".");
+                eprint!("{}", Colour::Red.bold().paint("."));
                 sleep!(1000);
             }
-            eprint!("{}", answer_str);
+            eprint!("{}", Colour::Red.bold().paint(answer_str));
             sleep!(2800);
 
             for _i in 1..chars_to_delete {
