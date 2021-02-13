@@ -3,6 +3,7 @@ use rand::Rng;
 use std::fs;
 use std::fs::File;
 use std::io::{prelude::*, BufReader};
+use std::process;
 use std::thread;
 use std::time;
 
@@ -14,8 +15,15 @@ macro_rules! sleep {
 }
 
 fn read_thinking_alternatives(filename: &str, storage_vec: &mut Vec<String>) {
-    let file = File::open(filename);
-    let reader = BufReader::new(file.unwrap());
+    let file: std::fs::File;
+    match File::open(filename) {
+        Ok(fd) => file = fd,
+        Err(err) => {
+            eprint!("Unable to open {}, {}", filename, err.to_string());
+            process::exit(-1);
+        }
+    };
+    let reader = BufReader::new(file);
 
     for line in reader.lines() {
         storage_vec.push(String::from(line.unwrap()));
@@ -42,7 +50,7 @@ fn main() {
     read_thinking_alternatives("answer", &mut answer);
 
     let source_file_content =
-        fs::read_to_string(filename).expect("Something went wrong reading the file");
+        fs::read_to_string(&filename).expect(format!("Unable to read file {}", &filename).as_str());
 
     let mut limit = 1;
     for source_file_line in source_file_content.lines() {
