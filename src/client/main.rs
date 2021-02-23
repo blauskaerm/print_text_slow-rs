@@ -10,7 +10,7 @@ use std::time;
 extern crate clap;
 use clap::{App, Arg};
 
-use std::io::{Read, Write};
+use std::io::Read;
 use std::net::TcpStream;
 
 macro_rules! sleep {
@@ -33,6 +33,32 @@ fn read_thinking_alternatives(filename: &str, storage_vec: &mut Vec<String>) {
 
     for line in reader.lines() {
 	storage_vec.push(String::from(line.unwrap()));
+
+fn read_thinking_alternatives_tcp(answer_vec: &mut Vec<String>, phrase_vec: &mut Vec<String>) {
+    let mut stream = TcpStream::connect("localhost:7878").unwrap();
+    let mut buffer_string = String::new();
+    let result = stream.read_to_string(&mut buffer_string);
+
+    if result.unwrap() > 0 {
+        for received_strings in buffer_string.split('\n') {
+            if received_strings.len() > 0 {
+                let received_strings_split: Vec<&str> = received_strings.split(';').collect();
+                if received_strings_split.len() == 2 {
+                    let type_s = received_strings_split[0];
+                    let sentence = received_strings_split[1];
+
+                    match type_s {
+                        "answer" => {
+                            answer_vec.push(String::from(sentence));
+                        }
+                        "phrase" => {
+                            phrase_vec.push(String::from(sentence));
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -67,7 +93,6 @@ fn main() {
     process::exit(0);
 
     let cmd_options = App::new("print_text_slow")
-	.version("0.1")
 	.author("BlauskaerM <blauskaerm@protonmail.ch>")
 	.about(
 	    "Print the source code of your projects and watch your computer think while doing it",
@@ -95,6 +120,7 @@ fn main() {
 		.takes_value(true),
 	)
 	.get_matches();
+        .version("0.2")
 
     let filename = cmd_options.value_of("FILE").unwrap_or("NOT FILE SELECTED");
     let phrases_file = cmd_options.value_of("Phrases").unwrap_or("phrase");
@@ -103,8 +129,10 @@ fn main() {
     let mut phrase: Vec<String> = Vec::new();
     let mut answer: Vec<String> = Vec::new();
 
-    read_thinking_alternatives(phrases_file, &mut phrase);
-    read_thinking_alternatives(answers_file, &mut answer);
+    read_thinking_alternatives_tcp(&mut answer, &mut phrase);
+
+    // read_thinking_alternatives(phrases_file, &mut phrase);
+    // read_thinking_alternatives(answers_file, &mut answer);
 
     let source_file_content =
 	fs::read_to_string(&filename).expect(format!("Unable to read file {}", &filename).as_str());
