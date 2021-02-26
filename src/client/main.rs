@@ -33,6 +33,8 @@ fn read_thinking_alternatives(filename: &str, storage_vec: &mut Vec<String>) {
 
     for line in reader.lines() {
 	storage_vec.push(String::from(line.unwrap()));
+    }
+}
 
 fn read_thinking_alternatives_tcp(answer_vec: &mut Vec<String>, phrase_vec: &mut Vec<String>) {
     let mut stream = TcpStream::connect("localhost:7878").unwrap();
@@ -74,25 +76,8 @@ const BACKSPACE: char = 8 as char;
 const SPACE: char = 32 as char;
 
 fn main() {
-    let mut stream = TcpStream::connect("localhost:7878").unwrap();
-
-    let mut buffer_string = String::new();
-
-    let result = stream.read_to_string(&mut buffer_string);
-
-    let answer_vec_test: Vec<String> = buffer_string
-	.split('\n')
-	.map(str::to_string)
-	.filter(|e| e.len() > 0)
-	.collect();
-
-    for my_string in answer_vec_test {
-	println!("Received: {}", my_string);
-    }
-
-    process::exit(0);
-
     let cmd_options = App::new("print_text_slow")
+        .version("0.2")
 	.author("BlauskaerM <blauskaerm@protonmail.ch>")
 	.about(
 	    "Print the source code of your projects and watch your computer think while doing it",
@@ -120,7 +105,6 @@ fn main() {
 		.takes_value(true),
 	)
 	.get_matches();
-        .version("0.2")
 
     let filename = cmd_options.value_of("FILE").unwrap_or("NOT FILE SELECTED");
     let phrases_file = cmd_options.value_of("Phrases").unwrap_or("phrase");
