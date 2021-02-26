@@ -1,3 +1,5 @@
+use std::thread;
+
 use std::io::Write;
 use std::net::TcpListener;
 use std::net::TcpStream;
@@ -38,10 +40,13 @@ fn main() {
     let listener = TcpListener::bind(format!("{}:{}", BIND_ADDR, BIND_PORT)).unwrap();
 
     for stream in listener.incoming() {
-	let stream = stream.unwrap();
 
 	println!("Connection established!");
 
-	handle_client(stream);
+	let stream = stream.unwrap();
+	thread::spawn(|| {
+	    handle_client(stream);
+	});
+
     }
 }
