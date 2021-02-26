@@ -36,8 +36,15 @@ fn read_thinking_alternatives(filename: &str, storage_vec: &mut Vec<String>) {
     }
 }
 
-fn read_thinking_alternatives_tcp(answer_vec: &mut Vec<String>, phrase_vec: &mut Vec<String>) {
-    let mut stream = TcpStream::connect("localhost:7878").unwrap();
+fn read_thinking_alternatives_tcp(server_str: &str,answer_vec: &mut Vec<String>, phrase_vec: &mut Vec<String>) {
+    let mut stream = match TcpStream::connect(server_str) {
+	Ok(server) => server,
+	Err(err) => {
+	    eprint!("Unable to connect to server {}, {}", server_str, err.to_string());
+	    process::exit(-1);
+	},
+    };
+
     let mut buffer_string = String::new();
     let result = stream.read_to_string(&mut buffer_string);
 
@@ -104,19 +111,30 @@ fn main() {
 		.help("File containing a list of answers (default ./answer)")
 		.takes_value(true),
 	)
+	.arg(
+	    Arg::with_name("Server")
+		.short("s")
+		.long("server")
+		.value_name("thinking-server")
+		.help("Receive phrases and answers from a remove server")
+		.takes_value(true),
+	)
 	.get_matches();
 
     let filename = cmd_options.value_of("FILE").unwrap_or("NOT FILE SELECTED");
     let phrases_file = cmd_options.value_of("Phrases").unwrap_or("phrase");
     let answers_file = cmd_options.value_of("Answers").unwrap_or("answer");
+    let server = cmd_options.value_of("Server").unwrap_or("No server");
 
     let mut phrase: Vec<String> = Vec::new();
     let mut answer: Vec<String> = Vec::new();
 
-    read_thinking_alternatives_tcp(&mut answer, &mut phrase);
-
-    // read_thinking_alternatives(phrases_file, &mut phrase);
-    // read_thinking_alternatives(answers_file, &mut answer);
+    if server != "No server" {
+	read_thinking_alternatives_tcp(server, &mut answer, &mut phrase);
+    } else {
+	read_thinking_alternatives(phrases_file, &mut phrase);
+	read_thinking_alternatives(answers_file, &mut answer);
+    }
 
     let source_file_content =
 	fs::read_to_string(&filename).expect(format!("Unable to read file {}", &filename).as_str());
